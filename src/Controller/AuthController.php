@@ -18,7 +18,7 @@ if (file_exists(AUTH0_PATH . '/vendor/autoload.php')) {
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Drupal\user\Entity\User;
-use Drupal\user\PrivateTempStoreFactory;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -169,7 +169,7 @@ class AuthController extends ControllerBase {
   /**
    * Initialize the controller.
    *
-   * @param \Drupal\user\PrivateTempStoreFactory $temp_store_factory
+   * @param Drupal\Core\TempStore\PrivateTempStoreFactory $temp_store_factory
    *   The temp store factory.
    * @param \Drupal\Core\Session\SessionManagerInterface $session_manager
    *   The current session.
@@ -224,7 +224,7 @@ class AuthController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-        $container->get('user.private_tempstore'),
+        $container->get('tempstore.private'),
         $container->get('session_manager'),
         $container->get('page_cache_kill_switch'),
         $container->get('logger.factory'),
@@ -444,7 +444,7 @@ class AuthController extends ControllerBase {
     catch (\Exception $e) {
       return $this->failLogin(
         $problem_logging_in_msg,
-        $this->t('Failed to exchange code for tokens: @exception', ['@exception' => $e->getMessage()])
+        $this->t('Failed to exchange code for tokens: @exception.', ['@exception' => $e->getMessage()])
       );
     }
 
@@ -716,7 +716,8 @@ class AuthController extends ControllerBase {
    * Get the auth0 user profile.
    */
   protected function findAuth0User($id) {
-    $auth0_user = db_select('auth0_user', 'a')
+    $database = \Drupal::database();
+    $auth0_user = $database->select('auth0_user', 'a')
       ->fields('a', ['drupal_id'])
       ->condition('auth0_id', $id, '=')
       ->execute()
@@ -732,7 +733,8 @@ class AuthController extends ControllerBase {
    *   The user info array.
    */
   protected function updateAuth0User(array $userInfo) {
-    db_update('auth0_user')
+    $database = \Drupal::database();
+    $database->update('auth0_user')
       ->fields([
         'auth0_object' => serialize($userInfo),
       ])
@@ -929,7 +931,8 @@ class AuthController extends ControllerBase {
    */
   protected function insertAuth0User(array $userInfo, $uid) {
 
-    db_insert('auth0_user')->fields([
+    $database = \Drupal::database();
+    $database->insert('auth0_user')->fields([
       'auth0_id' => $userInfo['user_id'],
       'drupal_id' => $uid,
       'auth0_object' => json_encode($userInfo),
