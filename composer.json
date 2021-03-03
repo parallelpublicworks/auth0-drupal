@@ -1,5 +1,5 @@
 {
-    "name": "auth0/auth0_drupal",
+    "name": "parallelpublicworks/auth0_drupal",
     "type": "drupal-module",
     "license": "MIT",
     "description": "Single Sign On for Enterprises + Social Login + User/Passwords. For all your Drupal instances. Powered by Auth0.",
